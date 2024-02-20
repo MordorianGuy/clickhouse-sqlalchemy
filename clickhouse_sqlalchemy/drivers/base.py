@@ -318,6 +318,14 @@ class ClickHouseCompiler(compiler.SQLCompiler):
 
         return text
 
+    def get_select_precolumns(self, select, **kwargs) -> str:
+        if isinstance(select._distinct, list):
+            cols = ", ".join([self.process(col, **kwargs) for col in select._distinct])
+            return f"DISTINCT ON ({cols}) "
+        if select._distinct:
+            return "DISTINCT "
+        return ""
+
     def sample_clause(self, select, **kw):
         return " \nSAMPLE " + self.process(select._sample_clause, **kw)
 
