@@ -226,20 +226,27 @@ class ClickHouseCompiler(compiler.SQLCompiler):
             )
         )
 
-    def visit_label(self,
-                    label,
-                    from_labeled_label=False,
-                    **kw):
+    def visit_label(
+        self,
+        label,
+        from_labeled_label: bool = False,
+        within_label_clause: bool = False,
+        within_columns_clause: bool = False,
+        **kwargs
+    ) -> str:
         if from_labeled_label:
-            return super(ClickHouseCompiler, self).visit_label(
-                label,
-                render_label_as_label=label
-            )
-        else:
-            return super(ClickHouseCompiler, self).visit_label(
-                label,
-                **kw
-            )
+            return super().visit_label(label, render_label_as_label=label)
+
+        is_alias = not within_columns_clause or within_label_clause
+        result = super().visit_label(
+            label,
+            within_columns_clause=True if is_alias else within_columns_clause,
+            within_label_clause=False if is_alias else within_label_clause,
+            **kwargs
+        )
+        if is_alias:
+            result = f"({result})"
+        return result
 
     def _compose_select_body(
             self, text, select, inner_columns, froms, byfrom, kwargs):
