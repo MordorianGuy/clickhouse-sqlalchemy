@@ -435,6 +435,9 @@ class ClickHouseCompiler(compiler.SQLCompiler):
 
         return text
 
+    def visit_interval(self, clause, **kw) -> str:
+        return f'INTERVAL {clause.value._compiler_dispatch(self, **kw)} {clause.unit}'
+
 
 class ClickHouseDDLCompiler(compiler.DDLCompiler):
     def _get_default_string(self, default, name):
