@@ -218,20 +218,27 @@ class ClickHouseSQLCompiler(compiler.SQLCompiler):
             )
         )
 
-    def visit_label(self,
-                    label,
-                    from_labeled_label=False,
-                    **kw):
+    def visit_label(
+        self,
+        label,
+        from_labeled_label: bool = False,
+        within_label_clause: bool = False,
+        within_columns_clause: bool = False,
+        **kwargs
+    ) -> str:
         if from_labeled_label:
-            return super(ClickHouseSQLCompiler, self).visit_label(
-                label,
-                render_label_as_label=label
-            )
-        else:
-            return super(ClickHouseSQLCompiler, self).visit_label(
-                label,
-                **kw
-            )
+            return super().visit_label(label, render_label_as_label=label)
+
+        is_alias = not within_columns_clause or within_label_clause
+        result = super().visit_label(
+            label,
+            within_columns_clause=True if is_alias else within_columns_clause,
+            within_label_clause=False if is_alias else within_label_clause,
+            **kwargs
+        )
+        if is_alias:
+            result = f"({result})"
+        return result
 
     def _compose_select_body(
         self,
@@ -334,6 +341,15 @@ class ClickHouseSQLCompiler(compiler.SQLCompiler):
             text += self.for_update_clause(select, **kwargs)
 
         return text
+
+    def get_select_precolumns(self, select, **kwargs) -> str:
+        if select._distinct_on:
+            return f"DISTINCT ON ({
+                ", ".join(self.process(col, **kwargs) for col in select._distinct_on)
+            }) "
+        if select._distinct:
+            return "DISTINCT "
+        return ""
 
     def sample_clause(self, select, **kw):
         return " \nSAMPLE " + self.process(select._sample_clause, **kw)
@@ -452,6 +468,9 @@ class ClickHouseSQLCompiler(compiler.SQLCompiler):
         self.stack.pop(-1)
 
         return text
+
+    def visit_interval(self, clause, **kw) -> str:
+        return f'INTERVAL {clause.value._compiler_dispatch(self, **kw)} {clause.unit}'
 
     def render_literal_value(self, value, type_):
         if isinstance(value, list):
