@@ -78,8 +78,6 @@ class ClickHouseExecutionContextBase(default.DefaultExecutionContext):
 class ClickHouseDialect(default.DefaultDialect):
     name = 'clickhouse'
     supports_cast = True
-    supports_unicode_statements = True
-    supports_unicode_binds = True
     supports_sane_rowcount = False
     supports_sane_multi_rowcount = False
     supports_native_decimal = True
@@ -106,9 +104,6 @@ class ClickHouseDialect(default.DefaultDialect):
     default_paramstyle = 'pyformat'
     colspecs = colspecs
     ischema_names = ischema_names
-    convert_unicode = True
-    returns_unicode_strings = True
-    description_encoding = None
     postfetch_lastrowid = False
     forced_server_version_string = None
 
