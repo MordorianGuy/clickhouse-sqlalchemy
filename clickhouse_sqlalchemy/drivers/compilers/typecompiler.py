@@ -120,12 +120,24 @@ class ClickHouseTypeCompiler(compiler.GenericTypeCompiler):
     def visit_ipv6(self, type_, **kw):
         return 'IPv6'
 
-    def visit_tuple(self, type_, **kw):
-        cols = (
-            self.process(type_api.to_instance(nested_type), **kw)
+    def visit_tuple(self, type_, **kw) -> str:
+        print(type(type_))
+        is_named_tuple = all(
+            isinstance(nested_type, tuple) and len(nested_type) == 2
             for nested_type in type_.nested_types
         )
-        return 'Tuple(%s)' % ', '.join(cols)
+        cols = (
+            (
+                f'{name} {self.process(type_api.to_instance(nested_type), **kw)}'
+                for name, nested_type in type_.nested_types
+            )
+            if is_named_tuple
+            else (
+                self.process(type_api.to_instance(nested_type), **kw)
+                for nested_type in type_.nested_types
+            )
+        )
+        return f'Tuple({', '.join(cols)})'
 
     def visit_map(self, type_, **kw):
         key_type = type_api.to_instance(type_.key_type)

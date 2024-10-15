@@ -229,10 +229,10 @@ class ClickHouseDialect(default.DefaultDialect):
         elif spec.startswith('Tuple'):
             inner = spec[6:-1]
             coltype = self.ischema_names['_tuple']
-            inner_types = [
-                self._get_column_type(name, t.strip())
-                for t in inner.split(',')
-            ]
+            inner_types = (
+                (field, self._get_column_type(name, t))
+                for field, t in (t.strip().split() for t in inner.split(','))
+            )
             return coltype(*inner_types)
 
         elif spec.startswith('Map'):
