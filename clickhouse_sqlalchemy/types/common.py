@@ -1,3 +1,4 @@
+from sqlalchemy.sql.functions import Function
 from sqlalchemy.sql.type_api import to_instance
 from sqlalchemy import types
 
@@ -192,3 +193,24 @@ class Map(ClickHouseTypeEngine):
         self.key_type = key_type
         self.value_type = value_type
         super(Map, self).__init__()
+
+
+class SimpleAggregateFunction(ClickHouseTypeEngine):
+    agg_func: Function | str
+    nested_type: tuple[type[ClickHouseTypeEngine] | ClickHouseTypeEngine, ...]
+
+    __visit_name__ = 'simpleaggregatefunction'
+
+    def __init__(
+        self,
+        agg_func: Function | str,
+        nested_type: type[ClickHouseTypeEngine] | ClickHouseTypeEngine,
+    ):
+        self.agg_func = agg_func
+        self.nested_type = to_instance(nested_type)
+        super().__init__()
+
+    def __repr__(self) -> str:
+        return f'SimpleAggregateFunction({
+            'sa.func.' if not isinstance(self.agg_func, str) else ''
+        }{self.agg_func}, {self.nested_type.__module__}{self.nested_type!r})'

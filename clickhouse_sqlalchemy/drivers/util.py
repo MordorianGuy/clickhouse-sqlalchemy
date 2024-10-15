@@ -16,3 +16,19 @@ def get_inner_spec(spec):
             break
 
     return spec[offset + 1:i]
+
+
+def parse_arguments(s: str) -> tuple[str, ...]:
+    parts = s.split(",")
+    level = 0
+    start = 0
+    result = []
+
+    for i, part in enumerate(parts, 1):
+        level += part.count("(") - part.count(")")
+        if level == 0:
+            argument = "".join(parts[start:i]).strip()
+            result.append(argument)
+            start = i
+
+    return tuple(result)

@@ -34,6 +34,7 @@ __all__ = [
     'Nested',
     'Tuple',
     'Map',
+    'SimpleAggregateFunction',
 ]
 
 from .common import String
@@ -68,6 +69,7 @@ from .common import Enum16
 from .common import Decimal
 from .common import Tuple
 from .common import Map
+from .common import SimpleAggregateFunction
 from .ip import IPv4
 from .ip import IPv6
 from .nested import Nested

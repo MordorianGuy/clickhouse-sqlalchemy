@@ -1,4 +1,5 @@
 import enum
+from typing import Final, LiteralString
 
 from sqlalchemy import schema, types as sqltypes, util as sa_util, text
 from sqlalchemy.engine import default, reflection
@@ -13,7 +14,7 @@ from .compilers.ddlcompiler import ClickHouseDDLCompiler
 from .compilers.sqlcompiler import ClickHouseSQLCompiler
 from .compilers.typecompiler import ClickHouseTypeCompiler
 from .reflection import ClickHouseInspector
-from .util import get_inner_spec
+from .util import get_inner_spec, parse_arguments
 from .. import types
 
 # Column specifications
@@ -21,7 +22,8 @@ colspecs = {}
 
 
 # Type converters
-ischema_names = {
+# noinspection PyTypeChecker
+ischema_names: Final[dict[LiteralString, types.common.ClickHouseTypeEngine]] = {
     'Int256': types.Int256,
     'Int128': types.Int128,
     'Int64': types.Int64,
@@ -55,6 +57,7 @@ ischema_names = {
     '_lowcardinality': types.LowCardinality,
     '_tuple': types.Tuple,
     '_map': types.Map,
+    '_simpleaggregatefunction': types.SimpleAggregateFunction,
 }
 
 
@@ -104,7 +107,10 @@ class ClickHouseDialect(default.DefaultDialect):
     max_identifier_length = 127
     default_paramstyle = 'pyformat'
     colspecs = colspecs
-    ischema_names = ischema_names
+    # noinspection PyFinal
+    ischema_names: Final[
+        dict[LiteralString, types.common.ClickHouseTypeEngine]
+    ] = ischema_names
     postfetch_lastrowid = False
     forced_server_version_string = None
 
@@ -234,6 +240,14 @@ class ClickHouseDialect(default.DefaultDialect):
                 for field, t in (t.strip().split() for t in inner.split(','))
             )
             return coltype(*inner_types)
+
+        elif spec.startswith('SimpleAggregateFunction'):
+            inner = spec[24:-1]
+
+            agg_func, nested_type = parse_arguments(inner)
+            coltype = self.ischema_names['_simpleaggregatefunction']
+            return coltype(agg_func, self._get_column_type(name, nested_type))
+
 
         elif spec.startswith('Map'):
             inner = spec[4:-1]
