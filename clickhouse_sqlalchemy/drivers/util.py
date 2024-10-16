@@ -27,7 +27,7 @@ def parse_arguments(s: str) -> tuple[str, ...]:
     for i, part in enumerate(parts, 1):
         level += part.count("(") - part.count(")")
         if level == 0:
-            argument = "".join(parts[start:i]).strip()
+            argument = ",".join(parts[start:i]).strip()
             result.append(argument)
             start = i
 
